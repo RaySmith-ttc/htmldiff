@@ -1,0 +1,100 @@
+<meta charset="UTF-8">
+<style>
+    ins {
+        background-color: #cfc;
+        text-decoration: none;
+    }
+
+    del {
+        color: #999;
+        background-color: #eca0a0;
+    }
+</style>
+<style>
+    .highlighted {
+        background-color: yellow;
+        transition: background-color 0.5s ease-out;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const navPanel = document.createElement("div");
+        navPanel.style.position = "fixed";
+        navPanel.style.bottom = "20px";
+        navPanel.style.right = "20px";
+        navPanel.style.zIndex = "1000";
+        navPanel.style.display = "flex";
+        navPanel.style.flexDirection = "column";
+        navPanel.style.gap = "10px";
+
+        const upButton = document.createElement("button");
+        upButton.innerHTML = "&#9650;";
+        upButton.style.padding = "10px";
+        upButton.style.cursor = "pointer";
+        upButton.addEventListener("click", () => scrollToNearestElement("up"));
+
+        const downButton = document.createElement("button");
+        downButton.innerHTML = "&#9660;";
+        downButton.style.padding = "10px";
+        downButton.style.cursor = "pointer";
+        downButton.addEventListener("click", () => scrollToNearestElement("down"));
+
+        navPanel.appendChild(upButton);
+        navPanel.appendChild(downButton);
+
+        document.body.appendChild(navPanel);
+
+        const delInsElements = Array.from(document.querySelectorAll("del, ins")).sort((a, b) => {
+            return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+        });
+        let currentIndex = -1;
+        let previousIndex = -1;
+
+        function scrollToNearestElement(direction) {
+            const totalElements = delInsElements.length;
+
+            if (direction === 'down') {
+                let startIndex = currentIndex + 1;
+                if (startIndex >= totalElements) {
+                    startIndex = totalElements - 1;
+                }
+                for (let i = startIndex; i < totalElements; i++) {
+                    const rect = delInsElements[i].getBoundingClientRect();
+                    if (rect.top > 0) {
+                        updateHighlight(i);
+                        delInsElements[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return;
+                    }
+                }
+            } else if (direction === 'up') {
+                let startIndex = currentIndex - 1;
+                if (startIndex < 0) {
+                    startIndex = 0;
+                }
+                for (let i = startIndex; i >= 0; i--) {
+                    const rect = delInsElements[i].getBoundingClientRect();
+                    if (rect.bottom <= window.innerHeight) {
+                        updateHighlight(i);
+                        delInsElements[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return;
+                    }
+                }
+            }
+        }
+
+        function updateHighlight(newIndex) {
+            if (previousIndex !== -1 && delInsElements[previousIndex]) {
+                delInsElements[previousIndex].classList.remove('highlighted');
+            }
+            if (delInsElements[newIndex]) {
+                delInsElements[newIndex].classList.add('highlighted');
+                setTimeout(() => {
+                    delInsElements[newIndex].classList.remove('highlighted');
+                }, 2000);
+            }
+            previousIndex = currentIndex;
+            currentIndex = newIndex;
+        }
+    });
+</script>

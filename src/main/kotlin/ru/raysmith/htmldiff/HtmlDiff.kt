@@ -482,6 +482,7 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
 
             return Jsoup.parse(String(html), Parser.htmlParser()).apply {
                 applyOutputSettingsPreset()
+                head().append(ClassLoader.getSystemClassLoader().getResource("head.html")?.readText() ?: "")
             }.outerHtml()
         }
 
