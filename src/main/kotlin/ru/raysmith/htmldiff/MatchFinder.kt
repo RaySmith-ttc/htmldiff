@@ -1,14 +1,15 @@
 package ru.raysmith.htmldiff
 
 class MatchFinder(
-    private val _oldWords: Array<String>,
-    private val _newWords: Array<String>,
+    private val _oldWords: List<String>,
+    private val _newWords: List<String>,
     private val _startInOld: Int,
     private val _endInOld: Int,
     private val _startInNew: Int,
     private val _endInNew: Int,
     options: MatchOptions
 ) {
+
     private var _wordIndices: HashMap<String, MutableList<Int>?>? = null
     private val _options: MatchOptions = options
 
@@ -19,7 +20,6 @@ class MatchFinder(
             // if word is a tag, we should ignore attributes as attribute changes are not supported (yet)
             val word = normalizeForIndex(_newWords[i])
             val key = putNewWord(block, word, _options.BlockSize) ?: continue //TODO check
-
 
             try {
                 if (_wordIndices!![key] != null) {

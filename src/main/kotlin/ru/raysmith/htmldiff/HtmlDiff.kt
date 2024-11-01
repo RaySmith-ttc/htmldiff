@@ -12,6 +12,12 @@ import kotlin.math.min
 
 class HtmlDiff(private var _oldText: String, private var _newText: String) {
 
+    /** Returns true if [word] is `<script>` block */
+    private fun isScriptBlock(word: String): Boolean {
+        return word.trim().startsWith("<script") && word.endsWith("</script>")
+    }
+
+
     /** This value defines balance between speed and memory utilization. The higher it is the faster it works and more memory consumes. */
     private val matchGranularityMaximum = 4
 
@@ -22,10 +28,10 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
     /** Tracks opening and closing formatting tags to ensure that we don't inadvertently generate invalid html during the diff process. */
     private var _specialTagDiffStack = Stack<String>()
 
-    private lateinit var _newWords: Array<String>
-    private lateinit var _oldWords: Array<String>
+    private lateinit var _newWords: List<String>
+    private lateinit var _oldWords: List<String>
     private var _matchGranularity = 0
-    private var _blockExpressions: MutableList<Pattern> = ArrayList()
+    private var _blockExpressions: MutableList<Pattern> = mutableListOf()
 
     /**
      * Defines how to compare repeating words. Valid values are from 0 to 1.
@@ -68,7 +74,7 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
 
         _content = java.lang.StringBuilder()
         _specialTagDiffStack = Stack()
-        _blockExpressions = ArrayList()
+        _blockExpressions = mutableListOf()
     }
 
     /**
@@ -76,7 +82,7 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
      *
      * @return HTML diff markup
      * */
-    fun build(): String? {
+    fun build(): String {
         // If there is no difference, don't bother checking for differences
         if (_oldText === _newText) {
             return _newText
@@ -111,6 +117,12 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
     }
 
     private fun performOperation(operation: Operation) {
+        // Skip modification if the content is a script block
+        if (operation.startInOld < _oldWords.size && isScriptBlock(_oldWords[operation.startInOld])) {
+            _content.append(_newWords.slice(operation.startInNew until operation.endInNew).joinToString(""))
+            return
+        }
+
         when (operation.action) {
             Action.Equal -> processEqualOperation(operation)
             Action.Delete -> processDeleteOperation(operation, "diffdel")
@@ -305,7 +317,7 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
                 !matchStartsAtCurrentPositionInOld && !matchStartsAtCurrentPositionInNew -> Action.Replace
                 matchStartsAtCurrentPositionInOld && !matchStartsAtCurrentPositionInNew -> Action.Insert
                 !matchStartsAtCurrentPositionInOld -> Action.Delete
-                
+
                 // This occurs if the first few words are the same in both versions
                 else -> Action.None
             }

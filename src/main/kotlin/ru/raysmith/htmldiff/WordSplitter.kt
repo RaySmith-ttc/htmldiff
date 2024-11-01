@@ -6,16 +6,24 @@ import java.util.regex.Pattern
 object WordSplitter {
 
     /** Converts Html text into a list of words */
-    fun convertHtmlToListOfWords(text: String, blockExpressions: List<Pattern>?): Array<String> {
+
+    /**
+     * Converts HTML text into a list of words, treating <script>...</script> blocks as single units.
+     */
+    fun convertHtmlToListOfWords(text: String, blockExpressions: List<Pattern>?): List<String> {
         var mode: Mode = Mode.Character
         val currentWord: MutableList<Char> = ArrayList()
         val words: MutableList<String> = ArrayList()
 
-        val blockLocations = findBlocks(text, blockExpressions)
+        val scriptPattern = Pattern.compile("<script.*?>.*?</script>", Pattern.DOTALL)
+        val allBlockExpressions = (blockExpressions ?: emptyList()) + listOf(scriptPattern)
 
-        val isBlockCheckRequired = blockLocations.size() > 0
+        val blockLocations = findBlocks(text, allBlockExpressions)
+
+        val isBlockCheckRequired = blockLocations.isNotEmpty()
         var isGrouping = false
         var groupingUntil = -1
+        var currentBlock: Pair<Int, Int?>? = null
 
         for (index in text.indices) {
             val character = text[index]
@@ -28,15 +36,32 @@ object WordSplitter {
                     isGrouping = false
                 }
 
-                // Check if we need to group the next text sequence/block
-                val until = 0
-                if (blockLocations[index] != null) {
+                if (currentBlock == null) {
+                    currentBlock = blockLocations.find { it.first == index }
+                }
+
+                if (currentBlock != null) {
                     isGrouping = true
-                    groupingUntil = until
+                    groupingUntil = currentBlock.second!!
                 }
 
                 // if we are grouping, then we don't care about what type of character we have, it's going to be treated as a word
-                if (isGrouping) {
+
+                // If we are grouping and it's a <script> block, close it as a distinct element
+                if (isGrouping && /*inv?.second == groupingUntil*/ index == groupingUntil) {
+                    currentWord.add(character)
+                    words.add(StringUtil.getString(currentWord))
+                    currentWord.clear()
+                    mode = Mode.Character
+                    isGrouping = false
+                    groupingUntil = -1
+                    currentBlock = null
+                    continue
+
+//                    currentWord.add(character)
+//                    mode = Mode.Character
+//                    continue
+                } else if (isGrouping) {
                     currentWord.add(character)
                     mode = Mode.Character
                     continue
@@ -188,12 +213,12 @@ object WordSplitter {
             words.add(StringUtil.getString(currentWord))
         }
 
-        return words.toTypedArray<String>()
+        return words
     }
 
     /** Finds any blocks that need to be grouped */
-    private fun findBlocks(text: String, blockExpressions: List<Pattern>?): Dictionary<Int, Int?> {
-        val blockLocations: Dictionary<Int, Int?> = Hashtable()
+    private fun findBlocks(text: String, blockExpressions: List<Pattern>?): List<Pair<Int, Int?>> {
+        val blockLocations = mutableListOf<Pair<Int, Int?>>()
 
         if (blockExpressions == null) {
             return blockLocations
@@ -203,7 +228,7 @@ object WordSplitter {
             try {
                 val match = exp.matcher(text)
                 while (match.find()) {
-                    blockLocations.put(match.start(), match.end())
+                    blockLocations.add(match.start() to match.end() - 1)
                 }
             } catch (_: Exception) { }
         }
