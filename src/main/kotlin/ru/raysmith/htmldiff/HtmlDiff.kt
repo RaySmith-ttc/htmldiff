@@ -466,7 +466,7 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
             "<((strong)|(b)|(i)|(em)|(big)|(small)|(u)|(sub)|(sup)|(strike)|(s))[>\\s]+"
         )
 
-        fun execute(oldFile: File, siteUrl: String, resourcesPath: String): String? {
+        fun execute(oldFile: File, siteUrl: String): String? {
             val html = Jsoup.connect(siteUrl).get()
             return execute(oldFile.readText(), html.outerHtml(), reparseNewText = false)
         }
@@ -494,7 +494,8 @@ class HtmlDiff(private var _oldText: String, private var _newText: String) {
 
             return Jsoup.parse(String(html), Parser.htmlParser()).apply {
                 applyOutputSettingsPreset()
-                head().append(ClassLoader.getSystemClassLoader().getResource("head.html")?.readText() ?: "")
+                val head = this::class.java.getResource("/head.html")
+                head().append(head?.readText() ?: "")
             }.outerHtml()
         }
 
