@@ -1,0 +1,14 @@
+[versions]
+kotlin = "2.0.0"
+jsoup = "1.18.1"
+kotest = "4.0.7"
+
+# plugins
+publish = "0.30.0"
+
+[libraries]
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+kotest-assertions-jvm = { module = "io.kotest:kotest-assertions-jvm", version.ref = "kotest" }
+
+[plugins]
+publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }

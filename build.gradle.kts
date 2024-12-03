@@ -1,24 +1,24 @@
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version libs.versions.kotlin
+    alias(libs.plugins.publish)
 }
 
 group = "ru.raysmith"
 version = "1.0.0"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation("org.jsoup:jsoup:1.18.1")
+    implementation(libs.jsoup)
 
     testImplementation(kotlin("test"))
-    testImplementation("io.kotest:kotest-assertions-jvm:4.0.7")
+    testImplementation(libs.kotest.assertions.jvm)
 }
 
-tasks.test {
-    useJUnitPlatform()
+tasks {
+    test {
+        useJUnitPlatform()
+    }
 }
+
 kotlin {
     jvmToolchain(17)
 }

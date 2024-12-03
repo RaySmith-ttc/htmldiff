@@ -16,7 +16,6 @@ class HtmlDiffTest {
         val diff = HtmlDiff(oldText, newText)
         diff.build()
         val actual = HtmlDiff.execute(oldText, newText)
-        File("src/test/output/expected.html").also { it.parentFile.mkdirs() }.writeText(actual ?: "")
 
         val expected = file("expected.html")
 
