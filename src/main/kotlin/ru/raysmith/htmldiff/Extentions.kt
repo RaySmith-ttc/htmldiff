@@ -2,10 +2,15 @@ package ru.raysmith.htmldiff
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Node
 import java.io.File
 import java.net.URL
 
-fun Document.downloadResourcesAndReplacePaths(outputDir: File, saveIndex: Boolean) {
+fun Document.downloadResourcesAndReplacePaths(
+    outputDir: File,
+    saveIndex: Boolean = true,
+    removeComments: Boolean = false
+) {
     if (!outputDir.exists()) {
         outputDir.mkdirs()
     }
@@ -38,7 +43,16 @@ fun Document.downloadResourcesAndReplacePaths(outputDir: File, saveIndex: Boolea
         element.attr(attributeKey, relativePath)
     }
 
+    if (removeComments) {
+        removeComments()
+    }
+
     if (saveIndex) {
         htmlFile.writeText(outer)
     }
+}
+
+fun Node.removeComments() {
+    childNodes().stream().filter { n -> "#comment" == n.nodeName() }.forEach(Node::remove)
+    childNodes().forEach { it.removeComments() }
 }
